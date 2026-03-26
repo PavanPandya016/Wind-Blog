@@ -1,5 +1,10 @@
 import mongoose, { Schema, Types } from "mongoose";
 
+/**
+ * Blog Schema Definition
+ * Represents a single blog post in the application.
+ * Contains article content, metadata, and status tracking.
+ */
 const blogSchema = new Schema({
     title: {
         type: String,
@@ -68,6 +73,12 @@ const blogSchema = new Schema({
 blogSchema.index({ status: 1, isDeleted: 1, createdAt: -1 });
 // no author because there is only one user (admin)
 
+/**
+ * Pre-save middleware for blog documents.
+ * - Sets `publishedAt` date if status is changed to "published"
+ * - Auto-generates unique `slug` from title (appends timestamp if duplicate exists)
+ * - Auto-generates `excerpt` from content if not explicitly provided
+ */
 blogSchema.pre("save", async function (next) {
     if (this.status === "published" && !this.publishedAt) {
         this.publishedAt = new Date();
@@ -98,9 +109,18 @@ blogSchema.pre("save", async function (next) {
     next();
 })
 
+/**
+ * Pre-find middleware for query operations.
+ * Automatically filters out soft-deleted blogs (isDeleted: true)
+ * from all standard find/findMany queries.
+ */
 blogSchema.pre(/^find/, function (next) {
     this.where({ isDeleted: false });
     next();
 });
 
+/**
+ * Blog Model export
+ * Provides interface to query and manipulate blog records within the Mongoose database.
+ */
 export const Blog = mongoose.model("Blog", blogSchema);

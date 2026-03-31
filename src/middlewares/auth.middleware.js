@@ -3,10 +3,10 @@
  * @description Authentication middlewares for verifying user identity and protecting routes.
  * Utilizes JSON Web Tokens (JWT) for stateless authentication.
  */
-import asyncHandler from "../utils/asyncHandler.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
-import ApiError from "../utils/ApiError.js";
+import { ApiError } from "../utils/ApiError.js";
 
 
 /**

@@ -72,11 +72,10 @@ const SALT_ROUND = parseInt(process.env.BCRYPT_SALT_ROUNDS) || 10;
  * @param {import("mongoose").CallbackWithoutResultAndOptionalError} next - Callback to proceed to the next middleware or save operation.
  * @returns {Promise<void>}
  */
-userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return next();
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) return;
 
     this.password = await bcrypt.hash(this.password, SALT_ROUND);
-    next();
 })
 
 /**
@@ -137,9 +136,6 @@ userSchema.methods.isAccountLocked = async function () {
         if (this.blockedUntil && now < this.blockedUntil.getTime()) {
             return true;
         }
-        await this.constructor.updateOne({ _id: this._id }, {
-            isBlocked: false, attempts: 0, lastAttempt: null, blockedUntil: null
-        });
         return false;
     }
     return false;
@@ -156,7 +152,13 @@ userSchema.methods.handleFailedAttempt = async function (maxAttempts = 5, lockDu
     const newAttempts = this.attempts + 1;
     const update = {
         $inc: { attempts: 1 },
-        lastAttempt: new Date(),
+        $set: {
+            lastAttempt: new Date(),
+            ...(newAttempts >= maxAttempts && {
+                isBlocked: true,
+                blockedUntil: new Date(Date.now() + lockDuration),
+            }),
+        },
     };
 
     if (newAttempts >= maxAttempts) {

@@ -1,78 +1,37 @@
-/**
- * @class ApiError
- * @extends Error
- * @description Custom error class to format API error responses consistently.
- * Extends the built-in Error class to include HTTP status codes, custom message, error details, and stack traces.
- */
 class ApiError extends Error {
     static DEFAULT_MESSAGE = "Something went wrong";
 
-    /**
-     * Creates an instance of ApiError.
-     * 
-     * @param {number} statusCode - The HTTP status code associated with the error (e.g., 400, 404, 500).
-     * @param {string} [message=ApiError.DEFAULT_MESSAGE] - The user-friendly error message to be displayed.
-     * @param {Array<any>} [errors=[]] - An array of detailed errors or validation issues.
-     * @param {string} [stack=""] - The error stack trace. If not provided, it will be auto-generated.
-     */
     constructor(statusCode, message = ApiError.DEFAULT_MESSAGE, errors = [], stack = "") {
         super(message);
 
         this.name = this.constructor.name;
         this.statusCode = statusCode;
-        this.errors = errors;
+        this.errors = Array.isArray(errors) ? errors : errors ? [errors] : [];
         this.success = false;
         this.data = null;
+        this.isOperational = true;
 
         stack ? (this.stack = stack) : Error.captureStackTrace(this, this.constructor);
     }
 
-    /**
-     * Creates a 400 Bad Request error.
-     * @param {string} [message] - Custom error message.
-     * @param {Array<any>} [errors] - Specific error details.
-     * @returns {ApiError} An initialized ApiError instance with a 400 status.
-     */
+    // 4xx - Client errors
     static badRequest(message, errors) { return new ApiError(400, message, errors); }
-
-    /**
-     * Creates a 401 Unauthorized error.
-     * @param {string} [message] - Custom error message.
-     * @param {Array<any>} [errors] - Specific error details.
-     * @returns {ApiError} An initialized ApiError instance with a 401 status.
-     */
     static unauthorized(message, errors) { return new ApiError(401, message, errors); }
-
-    /**
-     * Creates a 403 Forbidden error.
-     * @param {string} [message] - Custom error message.
-     * @param {Array<any>} [errors] - Specific error details.
-     * @returns {ApiError} An initialized ApiError instance with a 403 status.
-     */
     static forbidden(message, errors) { return new ApiError(403, message, errors); }
-
-    /**
-     * Creates a 404 Not Found error.
-     * @param {string} [message] - Custom error message.
-     * @param {Array<any>} [errors] - Specific error details.
-     * @returns {ApiError} An initialized ApiError instance with a 404 status.
-     */
     static notFound(message, errors) { return new ApiError(404, message, errors); }
+    static conflict(message, errors) { return new ApiError(409, message, errors); }
+    static unprocessable(message, errors) { return new ApiError(422, message, errors); }
+    static tooMany(message, errors) { return new ApiError(429, message, errors); }
 
-    /**
-     * Creates a 500 Internal Server error.
-     * @param {string} [message] - Custom error message.
-     * @param {Array<any>} [errors] - Specific error details.
-     * @returns {ApiError} An initialized ApiError instance with a 500 status.
-     */
+    // 5xx - Server errors
     static internal(message, errors) { return new ApiError(500, message, errors); }
+    static serviceUnavailable(message, errors) { return new ApiError(503, message, errors); }
 
-    /**
-     * Serializes the ApiError instance into a JSON object.
-     * Ensures consistent error response structure and omits stack trace in non-development environments.
-     * 
-     * @returns {Object} JSON representation format of the error.
-     */
+    // Wrap any native/third-party error into ApiError
+    static fromError(error, statusCode = 500) {
+        return new ApiError(statusCode, error.message, [], error.stack);
+    }
+
     toJSON() {
         return {
             success: this.success,
@@ -85,4 +44,4 @@ class ApiError extends Error {
     }
 }
 
-export default ApiError;
+export { ApiError };

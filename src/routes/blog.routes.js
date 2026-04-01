@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllBlogs } from "../controllers/blog.controller.js";
+import { getAllBlogs, getBlogBySlug } from "../controllers/blog.controller.js";
 import { rateLimit } from "express-rate-limit";
 
 const router = Router();
@@ -14,5 +14,6 @@ const blogLimiter = rateLimit({
 });
 
 router.route("/").get(blogLimiter, getAllBlogs);
+router.route("/:slug").get(blogLimiter, getBlogBySlug);
 
 export default router;

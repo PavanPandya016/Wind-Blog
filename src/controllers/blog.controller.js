@@ -20,4 +20,19 @@ const getAllBlogs = asyncHandler(async (req, res) => {
         );
 });
 
-export { getAllBlogs };
+const getBlogBySlug = asyncHandler(async (req, res) => {
+    const { slug } = req.params;
+
+    const blog = await Blog.findOne({ slug, status: "published" })
+        .select("title slug content author featuredImage tags readTime publishedAt")
+        .lean();
+
+    if (!blog) {
+        throw ApiError.notFound("Blog not found");
+    }
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, blog, "Blog fetched successfully"));
+});
+export { getAllBlogs, getBlogBySlug };

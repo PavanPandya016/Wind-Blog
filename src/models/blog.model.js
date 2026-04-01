@@ -114,9 +114,8 @@ blogSchema.pre("save", async function (next) {
  * Automatically filters out soft-deleted blogs (isDeleted: true)
  * from all standard find/findMany queries.
  */
-blogSchema.pre(/^find/, function (next) {
+blogSchema.pre(/^find/, function () {
     this.where({ isDeleted: false });
-    next();
 });
 
 /**
